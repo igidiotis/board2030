@@ -14,84 +14,112 @@ const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.05;
 
-// Camera position
-camera.position.set(0, 5, 10);
+// Camera position - Adjusted for more immersive view
+camera.position.set(0, 3, 5);
 camera.lookAt(0, 0, 0);
 
-// Lighting
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+// Enhanced Lighting
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.7); // Increased intensity
 scene.add(ambientLight);
 
-const pointLight = new THREE.PointLight(0xffffff, 0.5);
-pointLight.position.set(5, 5, 5);
-scene.add(pointLight);
+const pointLight1 = new THREE.PointLight(0xffffff, 0.8); // Main light with increased intensity
+pointLight1.position.set(5, 5, 5);
+scene.add(pointLight1);
 
-// Table
+const pointLight2 = new THREE.PointLight(0x00ff00, 0.5); // Green sci-fi accent light
+pointLight2.position.set(-5, 5, -5);
+scene.add(pointLight2);
+
+// Improved Table with reflective sci-fi material
 const tableGeometry = new THREE.CylinderGeometry(3, 3, 0.5, 32);
 const tableMaterial = new THREE.MeshStandardMaterial({
-  color: 0x404040,
-  metalness: 0.8,
-  roughness: 0.2,
+  color: 0x1c2526,
+  metalness: 0.9,
+  roughness: 0.1,
 });
 const table = new THREE.Mesh(tableGeometry, tableMaterial);
 scene.add(table);
 
-// Chairs
+// Enhanced Chairs with metallic blue material
 const chairGeometry = new THREE.BoxGeometry(0.5, 1, 0.5);
-const chairMaterial = new THREE.MeshStandardMaterial({ color: 0x0044ff });
+const chairMaterial = new THREE.MeshStandardMaterial({
+  color: 0x4682b4,
+  metalness: 0.5,
+  roughness: 0.3,
+});
 
 for (let i = 0; i < 6; i++) {
   const angle = (i / 6) * Math.PI * 2;
   const chair = new THREE.Mesh(chairGeometry, chairMaterial);
-  chair.position.x = Math.cos(angle) * 4; // Position chairs around table
+  chair.position.x = Math.cos(angle) * 4;
   chair.position.z = Math.sin(angle) * 4;
-  chair.position.y = 0.5; // Half the chair height
-  chair.lookAt(new THREE.Vector3(0, chair.position.y, 0)); // Make chairs face the table
+  chair.position.y = 0.5;
+  chair.lookAt(new THREE.Vector3(0, chair.position.y, 0));
   scene.add(chair);
 }
 
-// Holographic pie chart
+// Enhanced Holographic pie chart with glow effect
 const torusGeometry = new THREE.TorusGeometry(1, 0.1, 16, 50);
 const torusMaterial = new THREE.MeshStandardMaterial({
-  color: 0x00ff88,
+  color: 0x00ff00,
   transparent: true,
-  opacity: 0.6,
-  emissive: 0x00ff88,
+  opacity: 0.7,
+  emissive: 0x00ff00,
   emissiveIntensity: 0.5,
 });
 const hologram = new THREE.Mesh(torusGeometry, torusMaterial);
-hologram.position.y = 2; // 1.5 units above table
+hologram.position.y = 2;
 scene.add(hologram);
 
-// Skybox
-const skyboxGeometry = new THREE.BoxGeometry(100, 100, 100);
-const skyboxMaterial = new THREE.MeshBasicMaterial({
-  color: 0x000814,
-  side: THREE.BackSide,
-  transparent: true,
-  opacity: 0.95,
-});
-const skybox = new THREE.Mesh(skyboxGeometry, skyboxMaterial);
-scene.add(skybox);
+// Sci-fi room skybox
+const roomSize = 50;
+const roomGeometry = new THREE.BoxGeometry(roomSize, roomSize, roomSize);
+const roomMaterials = [
+  new THREE.MeshBasicMaterial({ 
+    color: 0x000814,
+    side: THREE.BackSide,
+    transparent: true,
+    opacity: 0.95,
+  }),
+  new THREE.MeshBasicMaterial({ 
+    color: 0x000814,
+    side: THREE.BackSide,
+    transparent: true,
+    opacity: 0.95,
+  }),
+  new THREE.MeshBasicMaterial({ 
+    color: 0x000814,
+    side: THREE.BackSide,
+    transparent: true,
+    opacity: 0.95,
+  }),
+  new THREE.MeshBasicMaterial({ 
+    color: 0x000814,
+    side: THREE.BackSide,
+    transparent: true,
+    opacity: 0.95,
+  }),
+  new THREE.MeshBasicMaterial({ 
+    color: 0x000814,
+    side: THREE.BackSide,
+    transparent: true,
+    opacity: 0.95,
+  }),
+  new THREE.MeshBasicMaterial({ 
+    color: 0x000814,
+    side: THREE.BackSide,
+    transparent: true,
+    opacity: 0.95,
+  }),
+];
 
-// Add some stars to the skybox
-const starGeometry = new THREE.BufferGeometry();
-const starMaterial = new THREE.PointsMaterial({
-  color: 0xffffff,
-  size: 0.1,
-});
+const room = new THREE.Mesh(roomGeometry, roomMaterials);
+scene.add(room);
 
-const starVertices = [];
-for (let i = 0; i < 1000; i++) {
-  const x = (Math.random() - 0.5) * 100;
-  const y = (Math.random() - 0.5) * 100;
-  const z = (Math.random() - 0.5) * 100;
-  starVertices.push(x, y, z);
-}
-
-starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
-const stars = new THREE.Points(starGeometry, starMaterial);
-scene.add(stars);
+// Add neon grid lines to the room
+const gridHelper = new THREE.GridHelper(50, 20, 0x00ff88, 0x00ff88);
+gridHelper.position.y = -roomSize/2;
+scene.add(gridHelper);
 
 // Animation loop
 function animate() {
