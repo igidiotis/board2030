@@ -9,15 +9,48 @@
         margin: 0;
         padding: 0;
         overflow: hidden;
+        font-family: 'Arial', sans-serif;
+        color: #00ffff;
+        background: #000;
       }
       #canvas-container {
         width: 100vw;
         height: 100vh;
+        position: relative;
+      }
+      #budget-info {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: rgba(0, 0, 0, 0.8);
+        padding: 20px;
+        border-radius: 10px;
+        border: 1px solid #00ffff;
+        box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+        z-index: 1000;
+      }
+      #budget-info h3 {
+        margin: 0 0 15px 0;
+        color: #fff;
+      }
+      #budget-info p {
+        margin: 5px 0;
+      }
+      #budget-info ul {
+        list-style: none;
+        padding: 0;
+        margin: 10px 0 0 0;
+      }
+      #budget-info li {
+        margin: 5px 0;
+        padding: 5px;
+        border-bottom: 1px solid rgba(0, 255, 255, 0.2);
       }
     </style>
   </head>
   <body>
     <div id="canvas-container"></div>
+    <div id="budget-info"></div>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html> 
