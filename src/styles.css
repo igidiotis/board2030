@@ -154,4 +154,108 @@ body {
   border-radius: 5px;
   background: rgba(0, 255, 255, 0.1);
   border-left: 3px solid #00ffff;
+}
+
+/* Role selection modal enhancements */
+.role-dilemma {
+  color: #ff9100;
+  font-size: 0.85em;
+  margin-top: 5px;
+}
+
+.role-goal {
+  color: #00ff00;
+  font-size: 0.85em;
+  margin-top: 5px;
+}
+
+/* Role info panel enhancements */
+#role-info {
+  background: rgba(0, 0, 0, 0.9);
+  min-width: 250px;
+}
+
+#role-info h3 {
+  color: #fff;
+  margin: 0 0 10px 0;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+.role-hint {
+  color: #00ff88;
+  font-style: italic;
+  margin: 10px 0;
+  padding: 5px;
+  border-left: 2px solid #00ff88;
+}
+
+.role-progress {
+  margin-top: 15px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(0, 255, 255, 0.2);
+}
+
+.role-progress p {
+  margin: 5px 0;
+  font-size: 0.9em;
+}
+
+/* Enhanced feedback panel */
+#feedback {
+  transition: all 0.3s ease;
+}
+
+.feedback-message {
+  padding: 15px;
+  margin: 5px 0;
+  border-radius: 5px;
+  background: rgba(0, 255, 255, 0.1);
+  border-left: 3px solid #00ffff;
+}
+
+/* Game end message */
+.game-end-message {
+  text-align: center;
+  padding: 20px;
+}
+
+.game-end-message h3 {
+  color: #fff;
+  margin: 0 0 15px 0;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+.game-end-message h4 {
+  color: #00ffff;
+  margin: 20px 0 10px 0;
+}
+
+.game-end-message ul {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0;
+  text-align: left;
+}
+
+.game-end-message li {
+  margin: 5px 0;
+  padding: 5px;
+  border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+}
+
+.restart-btn {
+  background: rgba(0, 255, 255, 0.2);
+  color: #fff;
+  border: 1px solid #00ffff;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 20px;
+  font-size: 1.1em;
+}
+
+.restart-btn:hover {
+  background: rgba(0, 255, 255, 0.4);
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
 } 

@@ -197,7 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
       scene.add(display);
     }
 
-    // Role definitions
+    // Role definitions with more detailed gameplay mechanics
     const roles = [
       {
         id: 0,
@@ -205,7 +205,9 @@ document.addEventListener('DOMContentLoaded', () => {
         description: "Focuses on advancing academic innovation",
         dilemma: "Needs $3M for a new lab, but Facilities are underfunded.",
         priorities: ["Research A", "Research B"],
-        position: 0
+        goal: 3000000,
+        position: 0,
+        hint: "Try to secure at least $3M for Research while considering Facilities' needs."
       },
       {
         id: 1,
@@ -213,7 +215,9 @@ document.addEventListener('DOMContentLoaded', () => {
         description: "Champions research initiatives and funding",
         dilemma: "Pushes for $2M more in Research, risking Scholarships.",
         priorities: ["Research A", "Research B"],
-        position: 1
+        goal: 2000000,
+        position: 1,
+        hint: "Balance $2M Research funding while maintaining Scholarship support."
       },
       {
         id: 2,
@@ -221,7 +225,9 @@ document.addEventListener('DOMContentLoaded', () => {
         description: "Oversees campus infrastructure",
         dilemma: "Requires $4M for campus upgrades, but Research is a priority.",
         priorities: ["Facilities A", "Facilities B"],
-        position: 2
+        goal: 4000000,
+        position: 2,
+        hint: "Secure $4M for Facilities without compromising Research funding."
       },
       {
         id: 3,
@@ -229,7 +235,9 @@ document.addEventListener('DOMContentLoaded', () => {
         description: "Manages day-to-day facility operations",
         dilemma: "Needs $2M for maintenance, but Scholarships need support.",
         priorities: ["Facilities A", "Facilities B"],
-        position: 3
+        goal: 2000000,
+        position: 3,
+        hint: "Obtain $2M for maintenance while supporting Scholarship programs."
       },
       {
         id: 4,
@@ -237,7 +245,9 @@ document.addEventListener('DOMContentLoaded', () => {
         description: "Manages student financial aid programs",
         dilemma: "Demands $3M for student aid, but Facilities are crumbling.",
         priorities: ["Scholarships A", "Scholarships B"],
-        position: 4
+        goal: 3000000,
+        position: 4,
+        hint: "Achieve $3M for Scholarships while addressing Facilities concerns."
       },
       {
         id: 5,
@@ -245,16 +255,26 @@ document.addEventListener('DOMContentLoaded', () => {
         description: "Represents student interests and needs",
         dilemma: "Wants $2M more for Scholarships, risking Research cuts.",
         priorities: ["Scholarships A", "Scholarships B"],
-        position: 5
+        goal: 2000000,
+        position: 5,
+        hint: "Get $2M for Scholarships without severely impacting Research."
       }
     ];
 
     let selectedRole = null;
     let chairMaterials = [];
     let feedbackTimeout = null;
+    let gameState = {
+      roundsPlayed: 0,
+      maxRounds: 10,
+      goalAchieved: false,
+      otherPrioritiesMet: false
+    };
 
-    // Initialize role selection UI
+    // Initialize role selection UI with enhanced information
     function initializeRoleSelection() {
+      const roleOptions = document.getElementById('role-options');
+      
       roles.forEach(role => {
         const roleOption = document.createElement('div');
         roleOption.className = 'role-option';
@@ -262,28 +282,34 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="role-info">
             <div class="role-title">${role.title}</div>
             <div class="role-description">${role.description}</div>
+            <div class="role-dilemma">Dilemma: ${role.dilemma}</div>
+            <div class="role-goal">Goal: Secure $${(role.goal / 1000000).toFixed(1)}M</div>
           </div>
           <button class="select-role-btn" data-role-id="${role.id}">Select Role</button>
         `;
         roleOptions.appendChild(roleOption);
       });
 
-      // Add click handlers for role selection
       document.querySelectorAll('.select-role-btn').forEach(button => {
         button.addEventListener('click', () => selectRole(parseInt(button.dataset.roleId)));
       });
     }
 
-    // Role selection handler
+    // Enhanced role selection handler
     function selectRole(roleId) {
       selectedRole = roles.find(r => r.id === roleId);
       document.getElementById('role-modal').style.display = 'none';
       
-      // Update role info display
+      // Update role info display with gameplay guidance
       const roleInfo = document.getElementById('role-info');
       roleInfo.innerHTML = `
         <h3>${selectedRole.title}</h3>
-        <p>${selectedRole.dilemma}</p>
+        <p class="role-dilemma">${selectedRole.dilemma}</p>
+        <p class="role-hint">${selectedRole.hint}</p>
+        <div class="role-progress">
+          <p>Rounds Left: ${gameState.maxRounds - gameState.roundsPlayed}</p>
+          <p>Goal Progress: $0M / $${(selectedRole.goal / 1000000).toFixed(1)}M</p>
+        </div>
       `;
 
       // Reset all chair materials
@@ -435,9 +461,111 @@ document.addEventListener('DOMContentLoaded', () => {
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
 
-    // Enhanced click handler with role-based feedback
+    // Enhanced feedback display with game mechanics
+    function showFeedback(category) {
+      const feedback = document.getElementById('feedback');
+      const priorityArea = selectedRole.priorities[0].split(' ')[0];
+      const categoryArea = category.split(' ')[0];
+      
+      let message = '';
+      let isPriorityAllocation = selectedRole.priorities.includes(category);
+      let totalInPriority = displays
+        .filter(d => selectedRole.priorities.includes(d.userData.category))
+        .reduce((sum, d) => sum + d.userData.allocation, 0);
+
+      // Update game state
+      gameState.roundsPlayed++;
+      gameState.goalAchieved = totalInPriority >= selectedRole.goal;
+      
+      // Generate contextual feedback
+      if (isPriorityAllocation) {
+        if (totalInPriority >= selectedRole.goal) {
+          message = `Excellent! You've reached your funding goal for ${priorityArea}!`;
+        } else {
+          let remaining = (selectedRole.goal - totalInPriority) / 1000000;
+          message = `Good choice! Still need $${remaining.toFixed(1)}M more for ${priorityArea}.`;
+        }
+      } else {
+        message = `Allocated to ${categoryArea}. Remember your ${priorityArea} priorities!`;
+      }
+
+      // Add round information
+      message += `<br><small>Rounds remaining: ${gameState.maxRounds - gameState.roundsPlayed}</small>`;
+
+      // Check for game end conditions
+      if (gameState.roundsPlayed >= gameState.maxRounds) {
+        endGame();
+      }
+
+      feedback.innerHTML = `<div class="feedback-message">${message}</div>`;
+      feedback.style.opacity = '1';
+
+      if (feedbackTimeout) clearTimeout(feedbackTimeout);
+      feedbackTimeout = setTimeout(() => {
+        feedback.style.opacity = '0';
+      }, 3000);
+
+      // Update role info with progress
+      updateRoleProgress(totalInPriority);
+    }
+
+    // Update role progress display
+    function updateRoleProgress(totalInPriority) {
+      const roleInfo = document.getElementById('role-info');
+      const progressSection = roleInfo.querySelector('.role-progress');
+      if (progressSection) {
+        progressSection.innerHTML = `
+          <p>Rounds Left: ${gameState.maxRounds - gameState.roundsPlayed}</p>
+          <p>Goal Progress: $${(totalInPriority / 1000000).toFixed(1)}M / $${(selectedRole.goal / 1000000).toFixed(1)}M</p>
+        `;
+      }
+    }
+
+    // Game end handling
+    function endGame() {
+      const totalInPriority = displays
+        .filter(d => selectedRole.priorities.includes(d.userData.category))
+        .reduce((sum, d) => sum + d.userData.allocation, 0);
+      
+      const goalAchieved = totalInPriority >= selectedRole.goal;
+      const otherCategories = {};
+      displays.forEach(d => {
+        const area = d.userData.category.split(' ')[0];
+        if (!selectedRole.priorities.includes(d.userData.category)) {
+          otherCategories[area] = (otherCategories[area] || 0) + d.userData.allocation;
+        }
+      });
+
+      const feedback = document.getElementById('feedback');
+      let message = '<div class="game-end-message">';
+      message += '<h3>Game Over!</h3>';
+      
+      if (goalAchieved) {
+        message += `<p>Congratulations! You've successfully secured funding for ${selectedRole.priorities[0].split(' ')[0]}!</p>`;
+      } else {
+        message += `<p>You didn't reach your funding goal. Better luck next time!</p>`;
+      }
+
+      message += '<h4>Final Allocations:</h4>';
+      message += '<ul>';
+      displays.forEach(d => {
+        message += `<li>${d.userData.category}: $${(d.userData.allocation / 1000000).toFixed(1)}M</li>`;
+      });
+      message += '</ul>';
+      
+      message += `<button onclick="location.reload()" class="restart-btn">Play Again</button>`;
+      message += '</div>';
+
+      feedback.innerHTML = message;
+      feedback.style.opacity = '1';
+      feedback.style.bottom = '50%';
+      feedback.style.transform = 'translateY(50%)';
+      feedback.style.maxWidth = '400px';
+    }
+
+    // Enhanced click handler with game mechanics
     function onMouseClick(event) {
-      if (!selectedRole) return;
+      if (!selectedRole || gameState.roundsPlayed >= gameState.maxRounds) return;
 
       const rect = renderer.domElement.getBoundingClientRect();
       mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
@@ -470,30 +598,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update budget display
         updateBudgetDisplay();
       }
-    }
-
-    // Feedback display
-    function showFeedback(category) {
-      const feedback = document.getElementById('feedback');
-      let message = '';
-
-      if (selectedRole.priorities.includes(category)) {
-        message = `Good choice! This aligns with your role as ${selectedRole.title}.`;
-      } else {
-        const priorityArea = selectedRole.priorities[0].split(' ')[0];
-        message = `Warning: ${category} funded, but your ${priorityArea} priorities remain underfunded!`;
-      }
-
-      feedback.innerHTML = `<div class="feedback-message">${message}</div>`;
-      feedback.style.opacity = '1';
-
-      // Clear previous timeout
-      if (feedbackTimeout) clearTimeout(feedbackTimeout);
-
-      // Hide feedback after 3 seconds
-      feedbackTimeout = setTimeout(() => {
-        feedback.style.opacity = '0';
-      }, 3000);
     }
 
     window.addEventListener('click', onMouseClick);
