@@ -186,9 +186,108 @@ document.addEventListener('DOMContentLoaded', () => {
       scene.add(display);
     }
 
-    // Enhanced Chairs
-    for (let i = 0; i < 6; i++) {
-      const angle = (i / 6) * Math.PI * 2;
+    // Role definitions
+    const roles = [
+      {
+        id: 0,
+        title: "Dean of Research",
+        description: "Focuses on advancing academic innovation",
+        dilemma: "Needs $3M for a new lab, but Facilities are underfunded.",
+        priorities: ["Research A", "Research B"],
+        position: 0
+      },
+      {
+        id: 1,
+        title: "Research Advocate",
+        description: "Champions research initiatives and funding",
+        dilemma: "Pushes for $2M more in Research, risking Scholarships.",
+        priorities: ["Research A", "Research B"],
+        position: 1
+      },
+      {
+        id: 2,
+        title: "Facilities Director",
+        description: "Oversees campus infrastructure",
+        dilemma: "Requires $4M for campus upgrades, but Research is a priority.",
+        priorities: ["Facilities A", "Facilities B"],
+        position: 2
+      },
+      {
+        id: 3,
+        title: "Facilities Manager",
+        description: "Manages day-to-day facility operations",
+        dilemma: "Needs $2M for maintenance, but Scholarships need support.",
+        priorities: ["Facilities A", "Facilities B"],
+        position: 3
+      },
+      {
+        id: 4,
+        title: "Scholarship Coordinator",
+        description: "Manages student financial aid programs",
+        dilemma: "Demands $3M for student aid, but Facilities are crumbling.",
+        priorities: ["Scholarships A", "Scholarships B"],
+        position: 4
+      },
+      {
+        id: 5,
+        title: "Student Advocate",
+        description: "Represents student interests and needs",
+        dilemma: "Wants $2M more for Scholarships, risking Research cuts.",
+        priorities: ["Scholarships A", "Scholarships B"],
+        position: 5
+      }
+    ];
+
+    let selectedRole = null;
+    let chairMaterials = [];
+    let feedbackTimeout = null;
+
+    // Initialize role selection UI
+    function initializeRoleSelection() {
+      const roleOptions = document.getElementById('role-options');
+      
+      roles.forEach(role => {
+        const roleOption = document.createElement('div');
+        roleOption.className = 'role-option';
+        roleOption.innerHTML = `
+          <div class="role-info">
+            <div class="role-title">${role.title}</div>
+            <div class="role-description">${role.description}</div>
+          </div>
+          <button class="select-role-btn" data-role-id="${role.id}">Select Role</button>
+        `;
+        roleOptions.appendChild(roleOption);
+      });
+
+      // Add click handlers for role selection
+      document.querySelectorAll('.select-role-btn').forEach(button => {
+        button.addEventListener('click', () => selectRole(parseInt(button.dataset.roleId)));
+      });
+    }
+
+    // Role selection handler
+    function selectRole(roleId) {
+      selectedRole = roles.find(r => r.id === roleId);
+      document.getElementById('role-modal').style.display = 'none';
+      
+      // Update role info display
+      const roleInfo = document.getElementById('role-info');
+      roleInfo.innerHTML = `
+        <h3>${selectedRole.title}</h3>
+        <p>${selectedRole.dilemma}</p>
+      `;
+
+      // Reset all chair materials
+      chairMaterials.forEach((material, index) => {
+        material.emissiveIntensity = index === selectedRole.position ? 0.5 : 0;
+      });
+
+      // Move camera to selected role's position
+      moveToSeat(selectedRole.position);
+    }
+
+    // Enhanced chair creation with stored materials
+    function createChair(angle, index) {
       const chairGroup = new THREE.Group();
       
       // Chair seat
@@ -196,8 +295,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const chairMaterial = new THREE.MeshStandardMaterial({
         color: 0x2f4f4f,
         metalness: 0.5,
-        roughness: 0.3
+        roughness: 0.3,
+        emissive: 0x00ff00,
+        emissiveIntensity: 0
       });
+      chairMaterials.push(chairMaterial);
+      
       const seat = new THREE.Mesh(seatGeometry, chairMaterial);
       
       // Chair backrest
@@ -213,7 +316,15 @@ document.addEventListener('DOMContentLoaded', () => {
       chairGroup.position.z = Math.sin(angle) * 4;
       chairGroup.position.y = 0.5;
       chairGroup.lookAt(new THREE.Vector3(0, chairGroup.position.y, 0));
-      scene.add(chairGroup);
+      
+      return chairGroup;
+    }
+
+    // Enhanced chair creation loop
+    for (let i = 0; i < 6; i++) {
+      const angle = (i / 6) * Math.PI * 2;
+      const chair = createChair(angle, i);
+      scene.add(chair);
     }
 
     // Updated Room with data screen walls
@@ -301,7 +412,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
 
+    // Enhanced click handler with role-based feedback
     function onMouseClick(event) {
+      if (!selectedRole) return;
+
       const rect = renderer.domElement.getBoundingClientRect();
       mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
       mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
@@ -311,6 +425,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (intersects.length > 0 && allocatedBudget < totalBudget) {
         const display = intersects[0].object;
+        const category = display.userData.category;
         display.userData.allocation += 1000000; // Add $1M
         allocatedBudget += 1000000;
 
@@ -322,27 +437,39 @@ document.addEventListener('DOMContentLoaded', () => {
         // Highlight clicked display
         display.material.emissiveIntensity = 1.0;
 
-        // Update pie chart scale based on total allocation
+        // Update pie chart scale
         const scale = 1 + (allocatedBudget / totalBudget) * 0.5;
         hologram.scale.set(scale, scale, scale);
+
+        // Show role-based feedback
+        showFeedback(category);
 
         updateBudgetDisplay();
       }
     }
 
-    function updateBudgetDisplay() {
-      const remaining = (totalBudget - allocatedBudget).toLocaleString();
-      const allocated = allocatedBudget.toLocaleString();
-      budgetInfo.innerHTML = `
-        <h3>Budget Allocation</h3>
-        <p>Remaining: $${remaining}</p>
-        <p>Allocated: $${allocated}</p>
-        <ul>
-          ${displays.map(d => `
-            <li>${d.userData.category}: $${d.userData.allocation.toLocaleString()}</li>
-          `).join('')}
-        </ul>
-      `;
+    // Feedback display
+    function showFeedback(category) {
+      const feedback = document.getElementById('feedback');
+      let message = '';
+
+      if (selectedRole.priorities.includes(category)) {
+        message = `Good choice! This aligns with your role as ${selectedRole.title}.`;
+      } else {
+        const priorityArea = selectedRole.priorities[0].split(' ')[0];
+        message = `Warning: ${category} funded, but your ${priorityArea} priorities remain underfunded!`;
+      }
+
+      feedback.innerHTML = `<div class="feedback-message">${message}</div>`;
+      feedback.style.opacity = '1';
+
+      // Clear previous timeout
+      if (feedbackTimeout) clearTimeout(feedbackTimeout);
+
+      // Hide feedback after 3 seconds
+      feedbackTimeout = setTimeout(() => {
+        feedback.style.opacity = '0';
+      }, 3000);
     }
 
     window.addEventListener('click', onMouseClick);
@@ -423,6 +550,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Start animation loop
     animate();
+
+    // Initialize role selection UI
+    initializeRoleSelection();
 
   } catch (error) {
     console.error('Error initializing scene:', error);
