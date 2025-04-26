@@ -4,6 +4,21 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 // Initialize scene and textures when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
   try {
+    // Check for required DOM elements
+    const container = document.getElementById('canvas-container');
+    const budgetInfo = document.getElementById('budget-info');
+    const roleInfo = document.getElementById('role-info');
+    const feedback = document.getElementById('feedback');
+    const roleModal = document.getElementById('role-modal');
+    const roleOptions = document.getElementById('role-options');
+
+    if (!container) throw new Error('Canvas container not found');
+    if (!budgetInfo) throw new Error('Budget info container not found');
+    if (!roleInfo) throw new Error('Role info container not found');
+    if (!feedback) throw new Error('Feedback container not found');
+    if (!roleModal) throw new Error('Role modal not found');
+    if (!roleOptions) throw new Error('Role options container not found');
+
     // Scene setup
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -11,10 +26,6 @@ document.addEventListener('DOMContentLoaded', () => {
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
     
-    const container = document.getElementById('canvas-container');
-    if (!container) {
-      throw new Error('Canvas container not found');
-    }
     container.appendChild(renderer.domElement);
 
     // Orbit controls
@@ -244,8 +255,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize role selection UI
     function initializeRoleSelection() {
-      const roleOptions = document.getElementById('role-options');
-      
       roles.forEach(role => {
         const roleOption = document.createElement('div');
         roleOption.className = 'role-option';
@@ -402,10 +411,24 @@ document.addEventListener('DOMContentLoaded', () => {
     // Budget tracking
     let totalBudget = 10000000; // $10M
     let allocatedBudget = 0;
-    const budgetInfo = document.getElementById('budget-info');
-    if (!budgetInfo) {
-      throw new Error('Budget info container not found');
+
+    // Update budget display function
+    function updateBudgetDisplay() {
+      const remaining = (totalBudget - allocatedBudget).toLocaleString();
+      const allocated = allocatedBudget.toLocaleString();
+      budgetInfo.innerHTML = `
+        <h3>Budget Allocation</h3>
+        <p>Remaining: $${remaining}</p>
+        <p>Allocated: $${allocated}</p>
+        <ul>
+          ${displays.map(d => `
+            <li>${d.userData.category}: $${d.userData.allocation.toLocaleString()}</li>
+          `).join('')}
+        </ul>
+      `;
     }
+
+    // Initialize the budget display
     updateBudgetDisplay();
 
     // Raycaster for display interaction
@@ -444,6 +467,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Show role-based feedback
         showFeedback(category);
 
+        // Update budget display
         updateBudgetDisplay();
       }
     }
@@ -556,7 +580,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   } catch (error) {
     console.error('Error initializing scene:', error);
-    // Display error message to user
     const container = document.getElementById('canvas-container');
     if (container) {
       container.innerHTML = `
