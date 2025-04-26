@@ -32,8 +32,108 @@ scene.add(pointLight2);
 
 // Load textures
 const textureLoader = new THREE.TextureLoader();
-const tableTexture = textureLoader.load('/assets/table-texture.jpg');
-const wallTexture = textureLoader.load('/assets/wall-texture.jpg');
+
+// Create procedural table texture
+const tableTextureSize = 512;
+const tableTextureCanvas = document.createElement('canvas');
+tableTextureCanvas.width = tableTextureSize;
+tableTextureCanvas.height = tableTextureSize;
+const tableCtx = tableTextureCanvas.getContext('2d');
+
+// Create gradient background
+const gradient = tableCtx.createRadialGradient(
+  tableTextureSize/2, tableTextureSize/2, 0,
+  tableTextureSize/2, tableTextureSize/2, tableTextureSize/2
+);
+gradient.addColorStop(0, '#2a3b3d');
+gradient.addColorStop(1, '#1c2526');
+tableCtx.fillStyle = gradient;
+tableCtx.fillRect(0, 0, tableTextureSize, tableTextureSize);
+
+// Add subtle grid pattern
+tableCtx.strokeStyle = '#3a4b4d';
+tableCtx.lineWidth = 1;
+for (let i = 0; i < tableTextureSize; i += 32) {
+  tableCtx.beginPath();
+  tableCtx.moveTo(i, 0);
+  tableCtx.lineTo(i, tableTextureSize);
+  tableCtx.stroke();
+  tableCtx.beginPath();
+  tableCtx.moveTo(0, i);
+  tableCtx.lineTo(tableTextureSize, i);
+  tableCtx.stroke();
+}
+
+// Add glow spots
+for (let i = 0; i < 10; i++) {
+  const x = Math.random() * tableTextureSize;
+  const y = Math.random() * tableTextureSize;
+  const glow = tableCtx.createRadialGradient(x, y, 0, x, y, 32);
+  glow.addColorStop(0, 'rgba(0, 255, 255, 0.2)');
+  glow.addColorStop(1, 'rgba(0, 255, 255, 0)');
+  tableCtx.fillStyle = glow;
+  tableCtx.fillRect(0, 0, tableTextureSize, tableTextureSize);
+}
+
+const tableTexture = new THREE.CanvasTexture(tableTextureCanvas);
+tableTexture.wrapS = THREE.RepeatWrapping;
+tableTexture.wrapT = THREE.RepeatWrapping;
+tableTexture.repeat.set(2, 2);
+
+// Create procedural wall texture
+const wallTextureSize = 1024;
+const wallTextureCanvas = document.createElement('canvas');
+wallTextureCanvas.width = wallTextureSize;
+wallTextureCanvas.height = wallTextureSize;
+const wallCtx = wallTextureCanvas.getContext('2d');
+
+// Create dark background
+wallCtx.fillStyle = '#000814';
+wallCtx.fillRect(0, 0, wallTextureSize, wallTextureSize);
+
+// Add data grid
+wallCtx.strokeStyle = 'rgba(0, 255, 255, 0.3)';
+wallCtx.lineWidth = 1;
+const gridSize = 64;
+for (let i = 0; i < wallTextureSize; i += gridSize) {
+  wallCtx.beginPath();
+  wallCtx.moveTo(i, 0);
+  wallCtx.lineTo(i, wallTextureSize);
+  wallCtx.stroke();
+  wallCtx.beginPath();
+  wallCtx.moveTo(0, i);
+  wallCtx.lineTo(wallTextureSize, i);
+  wallCtx.stroke();
+}
+
+// Add random data points
+wallCtx.font = '12px monospace';
+for (let i = 0; i < 100; i++) {
+  const x = Math.random() * wallTextureSize;
+  const y = Math.random() * wallTextureSize;
+  const dataPoint = Math.random().toString(16).substr(2, 4);
+  wallCtx.fillStyle = `rgba(0, 255, 255, ${Math.random() * 0.5 + 0.2})`;
+  wallCtx.fillText(dataPoint, x, y);
+}
+
+// Add flowing data lines
+for (let i = 0; i < 20; i++) {
+  const startX = Math.random() * wallTextureSize;
+  const startY = Math.random() * wallTextureSize;
+  const endX = startX + (Math.random() - 0.5) * 200;
+  const endY = startY + (Math.random() - 0.5) * 200;
+  
+  wallCtx.beginPath();
+  wallCtx.moveTo(startX, startY);
+  wallCtx.lineTo(endX, endY);
+  wallCtx.strokeStyle = `rgba(0, 255, 255, ${Math.random() * 0.3 + 0.1})`;
+  wallCtx.stroke();
+}
+
+const wallTexture = new THREE.CanvasTexture(wallTextureCanvas);
+wallTexture.wrapS = THREE.RepeatWrapping;
+wallTexture.wrapT = THREE.RepeatWrapping;
+wallTexture.repeat.set(1, 1);
 
 // Enhanced Table with texture and metallic material
 const tableGeometry = new THREE.CylinderGeometry(3, 3, 0.5, 32);
