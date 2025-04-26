@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
     controls.dampingFactor = 0.05;
 
     // Camera position
-    camera.position.set(0, 5, 8);
+    camera.position.set(0, 8, 8);
     camera.lookAt(0, 0, 0);
 
     // Enhanced Lighting
@@ -101,14 +101,17 @@ document.addEventListener('DOMContentLoaded', () => {
       throw new Error('Could not get 2D context for wall texture');
     }
 
-    // Create dark background
-    wallCtx.fillStyle = '#000814';
+    // Create dark background with subtle gradient
+    const wallGradient = wallCtx.createLinearGradient(0, 0, wallTextureSize, wallTextureSize);
+    wallGradient.addColorStop(0, '#001214');
+    wallGradient.addColorStop(1, '#001a1c');
+    wallCtx.fillStyle = wallGradient;
     wallCtx.fillRect(0, 0, wallTextureSize, wallTextureSize);
 
-    // Add data grid
-    wallCtx.strokeStyle = 'rgba(0, 255, 255, 0.3)';
-    wallCtx.lineWidth = 1;
-    const gridSize = 64;
+    // Add subtle grid
+    wallCtx.strokeStyle = 'rgba(0, 255, 255, 0.1)';
+    wallCtx.lineWidth = 0.5;
+    const gridSize = 128;
     for (let i = 0; i < wallTextureSize; i += gridSize) {
       wallCtx.beginPath();
       wallCtx.moveTo(i, 0);
@@ -120,34 +123,20 @@ document.addEventListener('DOMContentLoaded', () => {
       wallCtx.stroke();
     }
 
-    // Add random data points
-    wallCtx.font = '12px monospace';
-    for (let i = 0; i < 100; i++) {
+    // Add very subtle data points
+    wallCtx.font = '8px monospace';
+    for (let i = 0; i < 50; i++) {
       const x = Math.random() * wallTextureSize;
       const y = Math.random() * wallTextureSize;
-      const dataPoint = Math.random().toString(16).substr(2, 4);
-      wallCtx.fillStyle = `rgba(0, 255, 255, ${Math.random() * 0.5 + 0.2})`;
+      const dataPoint = Math.random().toString(16).substr(2, 2);
+      wallCtx.fillStyle = `rgba(0, 255, 255, ${Math.random() * 0.1 + 0.05})`;
       wallCtx.fillText(dataPoint, x, y);
-    }
-
-    // Add flowing data lines
-    for (let i = 0; i < 20; i++) {
-      const startX = Math.random() * wallTextureSize;
-      const startY = Math.random() * wallTextureSize;
-      const endX = startX + (Math.random() - 0.5) * 200;
-      const endY = startY + (Math.random() - 0.5) * 200;
-      
-      wallCtx.beginPath();
-      wallCtx.moveTo(startX, startY);
-      wallCtx.lineTo(endX, endY);
-      wallCtx.strokeStyle = `rgba(0, 255, 255, ${Math.random() * 0.3 + 0.1})`;
-      wallCtx.stroke();
     }
 
     const wallTexture = new THREE.CanvasTexture(wallTextureCanvas);
     wallTexture.wrapS = THREE.RepeatWrapping;
     wallTexture.wrapT = THREE.RepeatWrapping;
-    wallTexture.repeat.set(1, 1);
+    wallTexture.repeat.set(2, 1);
 
     // Enhanced Table with texture and metallic material
     const tableGeometry = new THREE.CylinderGeometry(3, 3, 0.5, 32);
@@ -358,9 +347,51 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.addEventListener('click', onMouseClick);
 
+    // Camera animation
+    let currentSeat = 0;
+    const seats = [];
+    for (let i = 0; i < 6; i++) {
+      const angle = (i / 6) * Math.PI * 2;
+      seats.push({
+        position: new THREE.Vector3(
+          Math.cos(angle) * 3.5, // Slightly closer to table than chair
+          1.2,                   // Eye level when seated
+          Math.sin(angle) * 3.5
+        ),
+        lookAt: new THREE.Vector3(0, 1.2, 0) // Looking at center of table at eye level
+      });
+    }
+
+    let isAnimatingCamera = true;
+    const targetPosition = seats[currentSeat].position.clone();
+    const targetLookAt = seats[currentSeat].lookAt.clone();
+    const startPosition = camera.position.clone();
+    const startLookAt = new THREE.Vector3(0, 0, 0);
+    let animationProgress = 0;
+
     // Animation loop
     function animate() {
       requestAnimationFrame(animate);
+      
+      // Camera animation
+      if (isAnimatingCamera) {
+        animationProgress += 0.01;
+        if (animationProgress >= 1) {
+          isAnimatingCamera = false;
+          animationProgress = 1;
+        }
+        
+        // Smooth easing function
+        const ease = 1 - Math.pow(1 - animationProgress, 3);
+        
+        // Update camera position
+        camera.position.lerpVectors(startPosition, targetPosition, ease);
+        
+        // Update camera look-at
+        const currentLookAt = new THREE.Vector3();
+        currentLookAt.lerpVectors(startLookAt, targetLookAt, ease);
+        camera.lookAt(currentLookAt);
+      }
       
       // Rotate hologram and particles
       hologram.rotation.y += 0.01;
@@ -374,6 +405,14 @@ document.addEventListener('DOMContentLoaded', () => {
       controls.update();
       renderer.render(scene, camera);
     }
+
+    // Modify OrbitControls to be more restricted
+    controls.maxPolarAngle = Math.PI / 1.5; // Limit how far down user can look
+    controls.minPolarAngle = Math.PI / 4;   // Limit how far up user can look
+    controls.maxDistance = 6;               // Limit zoom out
+    controls.minDistance = 2;               // Limit zoom in
+    controls.enablePan = false;             // Disable panning
+    controls.target.set(0, 1.2, 0);        // Set orbit center to table center at eye level
 
     // Window resize handler
     window.addEventListener('resize', () => {
